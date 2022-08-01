@@ -117,11 +117,11 @@ func (s *Restapp) Run(level log.Level) error {
 	s.Logger.Infof("start with address: %v", s.Address)
 	s.Logger.SetLevel(level)
 
-	osSignalChan := make(chan os.Signal, 1)
-	signal.Notify(osSignalChan, syscall.SIGINT, syscall.SIGTERM)
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
-		sig := <-osSignalChan
+		sig := <-stopChan
 		for _, f := range s.onSignalFunc {
 			f(sig)
 		}

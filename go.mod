@@ -1,4 +1,4 @@
-module github.com/illublank/salver
+module github.com/illublank/ore
 
 go 1.17
 

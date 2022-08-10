@@ -16,27 +16,24 @@ import (
   "github.com/illublank/go-common/log"
   "github.com/illublank/ore/app"
   "github.com/illublank/ore/app/rest/handler"
+  "github.com/illublank/ore/app/rest/listener"
 )
 
 // Restapp todo
 type Restapp struct {
-  Logger log.Logger
   app.App
-  Router  *mux.Router
-  Address string
-
+  Logger   log.Logger
+  Handlers *listener.ListenerHandlers
+  Router   *mux.Router
+  Server   *http.Server
+  Address  string
   doneChan chan error
-  server   *http.Server
   ctx      context.Context
-
-  onSignalFunc []func(os.Signal)
 }
 
 // New todo
-func New(config config.Config, logger log.Logger) *Restapp {
-  if logger == nil {
-    logger = log.NewCommonLogger("app")
-  }
+func New(config config.Config) *Restapp {
+  logger := log.NewCommonLogger("app")
 
   doneChan := make(chan error)
 
@@ -52,26 +49,23 @@ func New(config config.Config, logger log.Logger) *Restapp {
   // router.Handle("/", &handler.DebugHandler{Logger: logger, OrginalHandler: FileResource(currPath + "/static/index.html")})
   // router.Handle("/favicon.ico", &handler.DebugHandler{Logger: logger, OrginalHandler: FileResource(currPath + "/static/favicon.ico")})
   // router.Handle("/static/{_dummy:.*}", &handler.DebugHandler{Logger: logger, OrginalHandler: http.StripPrefix("/static/", http.FileServer(http.Dir(currPath+"/static/")))})
-  server := &http.Server{
-    Addr:    addr,
-    Handler: router,
-    BaseContext: func(l net.Listener) context.Context {
-      return ctx
-    },
-  }
 
-  app := &Restapp{
-    Logger:  logger,
-    Router:  router,
+  return &Restapp{
+    Logger:   logger,
+    Handlers: listener.NewListenerHandlers(),
+    Router:   router,
+    Server: &http.Server{
+      Addr:    addr,
+      Handler: router,
+      BaseContext: func(l net.Listener) context.Context {
+        return ctx
+      },
+    },
     Address: addr,
 
-    doneChan:     doneChan,
-    server:       server,
-    ctx:          ctx,
-    onSignalFunc: []func(os.Signal){},
+    doneChan: doneChan,
+    ctx:      ctx,
   }
-
-  return app
 }
 
 // Handle todo
@@ -89,7 +83,7 @@ func (s *Restapp) HandleFunc(p string, f func(http.ResponseWriter, *http.Request
 // HandleController todo
 func (s *Restapp) HandleController(c Controller) *Restapp {
   for k, v := range c.GetRouteMap() {
-    s.Logger.Debugf("registed request path: %v %v", k, v)
+    s.Logger.Infof("registed request path: {%v} {%v}", k, v)
     s.Handle(k, &handler.DebugHandler{Logger: s.Logger, OrginalHandler: v})
   }
   return s
@@ -97,24 +91,12 @@ func (s *Restapp) HandleController(c Controller) *Restapp {
 
 // RegisterOnShutdown todo
 func (s *Restapp) RegisterOnShutdown(f func()) {
-  s.server.RegisterOnShutdown(f)
-}
-
-// RegisterOnSignal todo
-func (s *Restapp) RegisterOnSignal(f func(os.Signal)) {
-  s.onSignalFunc = append(s.onSignalFunc, f)
-}
-
-// RegisterSignalChan todo
-func (s *Restapp) RegisterSignalChan(c chan os.Signal) {
-  s.RegisterOnSignal(func(s os.Signal) {
-    c <- s
-  })
+  s.Server.RegisterOnShutdown(f)
 }
 
 // Run todo
 func (s *Restapp) Run(level log.Level) error {
-  s.Logger.Infof("start with address: %v", s.Address)
+  s.Logger.Infof("start with address: {%v}", s.Address)
   s.Logger.SetLevel(level)
 
   stopChan := make(chan os.Signal, 1)
@@ -122,28 +104,30 @@ func (s *Restapp) Run(level log.Level) error {
 
   go func() {
     sig := <-stopChan
-    for _, f := range s.onSignalFunc {
-      f(sig)
-    }
-    s.Logger.Debugf("received sig: %v", sig)
+    s.Logger.Debugf("received sig:{%v}", sig)
     // Shutdown会让监听断开，即协程里的server.ListenAndServe()将往后执行。
     // Shutdown按协议说的是graceful，Close是immediately（强杀）。
     // s.server.Close()
-    if err := s.server.Shutdown(s.ctx); err == nil || err == http.ErrServerClosed {
+    if err := s.Server.Shutdown(s.ctx); err == nil || err == http.ErrServerClosed {
       s.Logger.Debug("Shutdown ok")
       s.doneChan <- nil
     } else {
-      s.Logger.Errorf("Shutdown err: %v", err)
+      s.Logger.Errorf("Shutdown err: {%v}", err)
       s.doneChan <- err
     }
   }()
 
   // http 端口监听
   go func() {
-    if err := s.server.ListenAndServe(); err == nil || err == http.ErrServerClosed {
+    lnw, err := listener.NewDefaultListenerWrapper(s.Address, s.Handlers)
+    if err != nil {
+      s.Logger.Errorf("Listen and serve close err: {%v}", err)
+      return
+    }
+    if err := s.Server.Serve(lnw); err == nil || err == http.ErrServerClosed {
       s.Logger.Debug("Listen and serve close ok")
     } else {
-      s.Logger.Errorf("Listen and serve close err: %v", err)
+      s.Logger.Errorf("Listen and serve close err: {%v}", err)
     }
   }()
 
@@ -153,7 +137,7 @@ func (s *Restapp) Run(level log.Level) error {
   // 退出信号
   err := <-s.doneChan
   if err != nil {
-    s.Logger.Errorf("server shutdown err: %v", err)
+    s.Logger.Errorf("server shutdown err: {%v}", err)
   } else {
     s.Logger.Infof("server shutdown graceful")
   }

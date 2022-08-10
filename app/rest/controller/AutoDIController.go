@@ -2,7 +2,6 @@ package controller
 
 import (
   "encoding/json"
-  "fmt"
   "net/http"
   "reflect"
 
@@ -57,12 +56,9 @@ func buildHandleFunc(obj reflect.Value) http.HandlerFunc {
   } else {
     return http.HandlerFunc(
       func(w http.ResponseWriter, r *http.Request) {
-
+        w.Header().Add("Content-Type", "application/json")
         wVal := reflect.ValueOf(w)
-        // wTyp := wVal.Type()
-        // fmt.Println(wTyp)
         rVal := reflect.ValueOf(r)
-        // rTyp := rVal.Type()
         pathVals := mux.Vars(r)
         pathValsRV := reflect.ValueOf(httptyp.PathVals(pathVals))
         queryVals := r.URL.Query()
@@ -84,16 +80,16 @@ func buildHandleFunc(obj reflect.Value) http.HandlerFunc {
         paramValues := make([]reflect.Value, typ.NumIn())
         for i := 0; i < typ.NumIn(); i++ {
           pTyp := typ.In(i)
-          fmt.Println(pTyp, pTyp.Kind())
+          // fmt.Println(pTyp, pTyp.Kind())
           trv.InType = pTyp
-          rv, err := tMap(pTyp, trv)
+          rv, err := Lookup(pTyp, trv)
           if err != nil {
             w.WriteHeader(http.StatusBadRequest)
             w.Write([]byte(err.Error()))
           }
           paramValues[i] = rv
         }
-        fmt.Println(paramValues)
+        // fmt.Println(paramValues)
         retVals := obj.Call(paramValues)
 
         resObjIdx := -1
@@ -114,4 +110,10 @@ func buildHandleFunc(obj reflect.Value) http.HandlerFunc {
       },
     )
   }
+}
+
+type Handler func(w http.ResponseWriter, r *http.Request)
+
+func (s Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
 }

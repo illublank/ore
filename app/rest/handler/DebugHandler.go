@@ -1,7 +1,6 @@
 package handler
 
 import (
-  "fmt"
   "net/http"
 
   "github.com/illublank/go-common/log"
@@ -15,6 +14,6 @@ type DebugHandler struct {
 }
 
 func (s *DebugHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-  s.Logger.Debug(fmt.Sprintf("%v %v %v %v", r.Method, r.URL.Path, r.URL.RawQuery, r.Header))
+  s.Logger.Debugf("{%v} {%v} {%v} {%v}", r.Method, r.URL.Path, r.URL.RawQuery, r.Header)
   s.OrginalHandler.ServeHTTP(w, r)
 }

@@ -3,10 +3,12 @@ package rest_test
 import (
   "fmt"
   "go/types"
+  "net"
   "net/http"
   "testing"
 
   "github.com/illublank/go-common/config/mock"
+  "github.com/illublank/go-common/log"
   "github.com/illublank/go-common/typ/collection"
   "github.com/illublank/ore/app/rest"
   "github.com/illublank/ore/app/rest/controller"
@@ -21,13 +23,13 @@ type Object struct {
   B string
 }
 
-func (t *TestComponent) Get(id *httptyp.RequestPath, obj *Object, r *http.Request, w http.ResponseWriter, header httptyp.HeaderVals, query httptyp.QueryVals, pathVals httptyp.PathVals, p struct {
+func (t *TestComponent) Get(id *httptyp.RequestPath, r *http.Request, w http.ResponseWriter, header httptyp.HeaderVals, query httptyp.QueryVals, pathVals httptyp.PathVals, p struct {
   Id *httptyp.RequestPath
 }) string {
   x, _ := header.Get("Test-Key")
   h, _ := query.Get("ha-ha")
   h2, _ := query.Get("s.a")
-  fmt.Println(id, obj, x, h, h2, p.Id)
+  fmt.Println(id, x, h, h2, p.Id)
   return id.String()
 }
 
@@ -35,11 +37,31 @@ func TestRestapp(t *testing.T) {
 
   cfg := mock.NewMapConfig(collection.NewGoMap())
 
-  app := rest.New(cfg, nil)
+  app := rest.New(cfg)
 
   app.HandleController(controller.NewAutoDIController("test", &TestComponent{}))
 
-  app.SimpleRun()
+  app.Handlers.BeforeAccept.Add(func(net.Listener) {
+
+    // for i := 0; i < 5; i++ {
+    //   fmt.Println("BeforeAccept", i)
+    //   time.Sleep(time.Second)
+    // }
+  })
+  remoteCount := 0
+  app.Handlers.AfterAccept.Add(func(l net.Listener, c net.Conn, e error) {
+    remoteCount++
+    fmt.Println("remote", remoteCount, c.RemoteAddr())
+  })
+  // app.Handlers.BeforeAccept.Add(func(net.Listener) {
+
+  //   for i := 0; i < 10; i++ {
+  //     fmt.Println("BeforeAccept", i)
+  //     time.Sleep(time.Second)
+  //   }
+  // })
+
+  app.Run(log.Debug)
 }
 
 func T(s string) types.Type {

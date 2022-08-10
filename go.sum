@@ -1,4 +1,4 @@
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
-github.com/illublank/go-common v0.1.0 h1:30PBQCEroompAcVPhCVkxrCyM2BWnu4y9sRZMnvtW1Q=
-github.com/illublank/go-common v0.1.0/go.mod h1:e8Pso6rou4myL5sNF5XO1tcgzX6COKVdG693BD6/YFI=
+github.com/illublank/go-common v0.2.3 h1:xe0YYFOsjlollGGQ/rPNaV+K3ucuzWeiPhm2doPK8UU=
+github.com/illublank/go-common v0.2.3/go.mod h1:PBmBXzoxNz8wH7uLZy61682mC4PujU11G2avccv9aeo=

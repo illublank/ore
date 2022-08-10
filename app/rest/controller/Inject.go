@@ -1,12 +1,12 @@
 package controller
 
 import (
-  "encoding/json"
-  "io/ioutil"
-  "net/http"
-  "reflect"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"reflect"
 
-  "github.com/illublank/ore/app/rest/httptyp"
+	"github.com/illublank/ore/app/rest/httptyp"
 )
 
 var HandleFuncType = reflect.TypeOf((*http.HandlerFunc)(nil)).Elem()
@@ -34,7 +34,7 @@ type TypeTuple struct {
   Val func(*TypeReflectValue) reflect.Value
 }
 
-func tMap(t reflect.Type, trv *TypeReflectValue) (reflect.Value, error) {
+func Lookup(t reflect.Type, trv *TypeReflectValue) (reflect.Value, error) {
   switch {
   case t.String() == "http.ResponseWriter":
     return trv.RV_HttpResponseWriter, nil

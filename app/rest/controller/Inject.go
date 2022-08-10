@@ -1,12 +1,12 @@
 package controller
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"net/http"
-	"reflect"
+  "encoding/json"
+  "io"
+  "net/http"
+  "reflect"
 
-	"github.com/illublank/ore/app/rest/httptyp"
+  "github.com/illublank/ore/app/rest/httptyp"
 )
 
 var HandleFuncType = reflect.TypeOf((*http.HandlerFunc)(nil)).Elem()
@@ -89,7 +89,7 @@ func Lookup(t reflect.Type, trv *TypeReflectValue) (reflect.Value, error) {
     }
     return structValue, nil
   default:
-    bs, err := ioutil.ReadAll(trv.OBJ_HttpRequest.Body)
+    bs, err := io.ReadAll(trv.OBJ_HttpRequest.Body)
     if err != nil {
       return NullValue, err
     }

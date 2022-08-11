@@ -1,90 +1,101 @@
 package httptyp
 
 import (
-  "net/http"
-  "net/url"
-  "reflect"
+	"net/http"
+	"net/url"
+	"reflect"
 )
 
-type PathVals map[string]string
+type HttpRequestPathValues map[string]string
 
-var PathValsType reflect.Type = reflect.TypeOf((*PathVals)(nil)).Elem()
+var HttpRequestPathValuesType reflect.Type = reflect.TypeOf((*HttpRequestPathValues)(nil)).Elem()
 
-func (s PathVals) Get(key string) (string, bool) {
-  v, e := s[key]
-  return v, e
+func (s HttpRequestPathValues) Get(key string) (string, bool) {
+	v, e := s[key]
+	return v, e
 }
 
-type QueryVals url.Values
+type HttpRequestQueryValues url.Values
 
-var QueryValsType reflect.Type = reflect.TypeOf((*QueryVals)(nil)).Elem()
+var HttpRequestQueryValuesType reflect.Type = reflect.TypeOf((*HttpRequestQueryValues)(nil)).Elem()
 
-func (s QueryVals) Get(key string) (string, bool) {
-  v, e := s[key]
-  if e {
-    if len(v) > 0 {
-      return v[0], true
-    } else {
-      return "", true
-    }
-  }
-  return "", false
+func (s HttpRequestQueryValues) Get(key string) (string, bool) {
+	v, e := s[key]
+	if e {
+		if len(v) > 0 {
+			return v[0], true
+		} else {
+			return "", true
+		}
+	}
+	return "", false
 }
 
-type HeaderVals http.Header
+type HttpRequestHeaderValues http.Header
 
-var HeaderValsType reflect.Type = reflect.TypeOf((*HeaderVals)(nil)).Elem()
+var HttpRequestHeaderValuesType reflect.Type = reflect.TypeOf((*HttpRequestHeaderValues)(nil)).Elem()
 
-func (s HeaderVals) Get(key string) (string, bool) {
-  v, e := s[key]
-  if e {
-    if len(v) > 0 {
-      return v[0], true
-    } else {
-      return "", true
-    }
-  }
-  return "", false
+func (s HttpRequestHeaderValues) Get(key string) (string, bool) {
+	v, e := s[key]
+	if e {
+		if len(v) > 0 {
+			return v[0], true
+		} else {
+			return "", true
+		}
+	}
+	return "", false
 }
 
-type RequestPath string
+type HttpRequestPath string
 
-var RequestPathPtrType reflect.Type = reflect.TypeOf((*RequestPath)(nil))
+var HttpRequestPathPtrType reflect.Type = reflect.TypeOf((*HttpRequestPath)(nil))
 
-func ParseRequestPath(s string) *RequestPath {
-  rp := RequestPath(s)
-  return &rp
+func ParseHttpRequestPath(s string) *HttpRequestPath {
+	hrp := HttpRequestPath(s)
+	return &hrp
 }
 
-func (s *RequestPath) String() string {
-  if s == nil {
-    return ""
-  }
-  return string(*s)
+func (s *HttpRequestPath) String() string {
+	if s == nil {
+		return ""
+	}
+	return string(*s)
 }
 
-type RequestQuery string
+type HttpRequestQuery string
 
-var RequestQueryPtrType reflect.Type = reflect.TypeOf((*RequestQuery)(nil))
+var HttpRequestQueryPtrType reflect.Type = reflect.TypeOf((*HttpRequestQuery)(nil))
 
-func ParseRequestQuery(s string) *RequestQuery {
-  rp := RequestQuery(s)
-  return &rp
+func ParseHttpRequestQuery(s string) *HttpRequestQuery {
+	hrq := HttpRequestQuery(s)
+	return &hrq
 }
 
-func (s *RequestQuery) String() string {
-  return string(*s)
+func (s *HttpRequestQuery) String() string {
+	if s == nil {
+		return ""
+	}
+	return string(*s)
 }
 
-type RequestHeader string
+type HttpRequestHeader string
 
-var RequestHeaderPtrType reflect.Type = reflect.TypeOf((*RequestHeader)(nil))
+var HttpRequestHeaderPtrType reflect.Type = reflect.TypeOf((*HttpRequestHeader)(nil))
 
-func ParseRequestHeader(s string) *RequestHeader {
-  rp := RequestHeader(s)
-  return &rp
+func ParseHttpRequestHeader(s string) *HttpRequestHeader {
+	hrh := HttpRequestHeader(s)
+	return &hrh
 }
 
-func (s *RequestHeader) String() string {
-  return string(*s)
+func (s *HttpRequestHeader) String() string {
+	if s == nil {
+		return ""
+	}
+	return string(*s)
 }
+
+var HttpHandleFuncType = reflect.TypeOf((*http.HandlerFunc)(nil)).Elem()
+var HttpRequestType = reflect.TypeOf((*http.Request)(nil))
+
+var NullValue = reflect.ValueOf(nil)
